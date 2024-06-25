@@ -1,0 +1,13 @@
+data/
+*pyc
+*.txt
+*.pt
+tmp/best*
+tmp/config
+tmp/result
+cache/
+cam/
+*.pdf
+gate/
+*.png
+*.zip

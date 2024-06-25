@@ -1,0 +1,41 @@
+# ------ root_path/dataset_name ------
+root_path: '/home/zy/datasets/adapter_dataset'
+
+
+# ------ Load Cache and Features ------
+load_cache: False
+load_pre_feat: False
+
+
+# ------ Hyperparamters ------
+search_hp: True
+
+search_scale: [20, 10]
+search_step: [200, 20]
+
+
+init_beta: 1 # 1
+init_alpha: 6.5 # 6.5
+t1: 0.1
+t2: 0.13
+t3: 0.07
+ls3: 0.5
+ls4: 1
+lr: 0.001
+dw: 0.2
+lr1: 2.5
+lr2: 0.1
+ls1: 10
+ls2: 20
+iw: 15
+tw: 10
+ta: 0.5
+
+# ------ Basic Config ------
+dataset: 'stanford_cars'
+shots: 16
+backbone: 'RN50'
+
+lr: 0.001
+augment_epoch: 10
+train_epoch: 30
