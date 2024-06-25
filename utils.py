@@ -23,113 +23,6 @@ def cls_acc(output, target, topk=1):
     return acc
 
 
-def clip_classifier_back(classnames, template, clip_model):
-    with torch.no_grad():
-        clip_weights = []
-
-        for classname in classnames:
-            # Tokenize the prompts
-            classname = classname.replace('_', ' ')
-            texts = [t.format(classname) for t in template]
-            texts = clip.tokenize(texts).cuda()
-            # prompt ensemble for ImageNet
-            class_embeddings = clip_model.encode_text(texts)
-            class_embeddings /= class_embeddings.norm(dim=-1, keepdim=True)
-            class_embedding = class_embeddings.mean(dim=0)
-            class_embedding /= class_embedding.norm()
-            clip_weights.append(class_embedding)
-
-        clip_weights = torch.stack(clip_weights, dim=1).cuda()
-    return clip_weights
-
-
-def clip_classifier_back(classnames, template, clip_model):
-    # f = open('gpt3_prompts/CuPL_prompts_stanfordcars.json')
-    # f = open('gpt3_prompts/CuPL_prompts_fgvcaircraft.json')
-    f = open('gpt3_prompts/CuPL_prompts_flowers102.json')
-
-    prompts = json.load(f)
-    with torch.no_grad():
-        clip_weights = []
-        for classname in classnames:
-            # Tokenize the prompts
-            classname = classname.replace('_', ' ')
-
-            template_texts = [t.format(classname) for t in template]
-            cupl_texts = prompts[classname]
-            texts = template_texts + cupl_texts
-
-            texts_token = clip.tokenize(texts, truncate=True).cuda()
-            # prompt ensemble for ImageNet
-            class_embeddings = clip_model.encode_text(texts_token)
-
-            class_embeddings[:len(template_texts)] = class_embeddings[:len(
-                template_texts)] / class_embeddings[:len(template_texts)].norm(
-                    dim=-1, keepdim=True)
-            class_embeddings[:len(template_texts)] /= class_embeddings[:len(
-                template_texts)].norm()
-            learnable_weights = class_embeddings[len(template_texts):].mean(
-                dim=0).unsqueeze(
-                    0) / class_embeddings[len(template_texts):].mean(
-                        dim=0).unsqueeze(0).norm(dim=-1, keepdim=True)
-            class_embeddings = torch.concat(
-                (class_embeddings[:len(template_texts)], learnable_weights),
-                dim=0)
-            clip_weights.append(class_embeddings)
-        clip_weights = torch.stack(clip_weights, dim=1).cuda()
-    return clip_weights
-
-
-def clip_classifier_xxx(classnames,
-                        template,
-                        clip_model,
-                        dataset='stanford_cars'):
-    dataset2prompt = {
-        'stanford_cars': 'CuPL_prompts_stanfordcars.json',
-        'fgvc': 'CuPL_prompts_fgvcaircraft.json',
-        'oxford_flowers': 'CuPL_prompts_flowers102.json',
-        'oxford_pets': 'CuPL_prompts_oxfordpets.json',
-        'food101': 'CuPL_prompts_food101.json',
-        'sun397': 'CuPL_prompts_sun397.json',
-        'eurosat': 'CuPL_prompts_eurosat.json',
-        'caltech101': 'CuPL_prompts_caltech101.json',
-        'dtd': 'CuPL_prompts_dtd.json',
-        'ucf101': 'CuPL_prompts_ucf101.json',
-        'imagenet': 'CuPL_prompts_imagenet.json'
-    }
-
-    f = open('gpt3_prompts/' + dataset2prompt[dataset])
-
-    prompts = json.load(f)
-    with torch.no_grad():
-        clip_weights = []
-        for classname in classnames:
-            # Tokenize the prompts
-            classname = classname.replace('_', ' ')
-
-            template_texts = [t.format(classname) for t in template]
-            cupl_texts = prompts[classname]
-            texts = template_texts + cupl_texts
-
-            texts_token = clip.tokenize(texts, truncate=True).cuda()
-            # prompt ensemble for ImageNet
-            class_embeddings = clip_model.encode_text(texts_token)
-
-            class_embeddings /= class_embeddings.norm(dim=-1, keepdim=True)
-
-            # class_embeddings[:len(template_texts)] = class_embeddings[:len(template_texts)] / class_embeddings[:len(template_texts)].norm(dim=-1, keepdim=True)
-            # class_embeddings[:len(template_texts)] /= class_embeddings[:len(template_texts)].norm()
-            L = len(template_texts)
-            gpt_text = class_embeddings[L:].mean(dim=0).unsqueeze(0)
-            # gpt_text = gpt_text / gpt_text.norm()
-            # learnable_weights = class_embeddings[len(template_texts):].mean(dim=0).unsqueeze(0) / class_embeddings[len(template_texts):].mean(dim=0).unsqueeze(0).norm(dim=-1, keepdim=True)
-            class_embeddings = torch.concat((class_embeddings[:L], gpt_text),
-                                            dim=0)
-            clip_weights.append(class_embeddings)
-        clip_weights = torch.stack(clip_weights, dim=1).cuda()
-    return clip_weights
-
-
 def clip_classifier(classnames, template, clip_model, dataset='stanford_cars'):
     dataset2prompt = {
         'stanford_cars': 'CuPL_prompts_stanfordcars.json',
@@ -168,27 +61,11 @@ def clip_classifier(classnames, template, clip_model, dataset='stanford_cars'):
 
             class_embeddings /= class_embeddings.norm(dim=-1, keepdim=True)
 
-            # class_embeddings[:len(template_texts)] = class_embeddings[:len(template_texts)] / class_embeddings[:len(template_texts)].norm(dim=-1, keepdim=True)
-            # class_embeddings[:len(template_texts)] /= class_embeddings[:len(template_texts)].norm()
             L = len(template_texts)
 
             total_len = 16
             embedding_len = class_embeddings.shape[0]
             embedding_len - total_len
-            # gpt_text = class_embeddings[L:].mean(dim=0).unsqueeze(0)
-            # gpt_text = gpt_text / gpt_text.norm()
-            # learnable_weights = class_embeddings[len(template_texts):].mean(dim=0).unsqueeze(0) / class_embeddings[len(template_texts):].mean(dim=0).unsqueeze(0).norm(dim=-1, keepdim=True)
-            # class_embeddings = torch.concat((class_embeddings[:L], gpt_text), dim=0)
-            # for i in range (total_len):
-            #     if i <= 7:
-            #         class_embeddings[i,:] = class_embeddings[i,:] * 0.8
-
-            # gpt_text = class_embeddings[L:].mean(dim=0).unsqueeze(0)
-            # class_embeddings = torch.concat((class_embeddings[:L], gpt_text), dim=0)
-            # clip_weights.append(class_embeddings)
-
-            # clip_weights.append(class_embeddings[:L])
-            # concat_weight = class_embeddings[:L]
             distance = (class_embeddings.shape[0] - L) // (total_len - L)
             for i in range(total_len - L):
                 left = L + i * distance
@@ -657,31 +534,6 @@ def info_nce(query,
 
     return F.cross_entropy(logits / temperature, labels, reduction=reduction)
 
-    # labels = F.one_hot(labels, num_classes=len(query)).float()
-    # logits = F.softmax(logits / temperature, dim=1)
-    # logits = torch.log(logits)
-    # loss = -(logits * labels).sum(dim=1).mean()
-
-    # print (logits)
-    # breakpoint()
-    # loss = -(logits @ labels).sum(dim=1).mean()
-
-    # return Loss
-    # if margin is not None:
-    #     # print (torch.abs(logits) < margin)
-    #     # breakpoint()
-    #     logits[torch.abs(logits) < margin] = 0.0
-    # # logits[torch.abs(logits) < 1e-6] = -999999.9
-    # # print (logits.max(), logits.min())
-    # # return large_loss( logits / temperature, labels)
-    # labels
-    # return F.cross_entropy(logits / temperature, labels, reduction=reduction)
-    # loss_1 = F.cross_entropy(logits / temperature, labels, reduction=reduction)
-
-    # amsoftmax_loss = AdMSoftmaxLoss(len(query), len(query), m=0.1, s=0.5).cuda()
-
-    # return amsoftmax_loss(logits / temperature, labels) * 0.2 + loss_1 * 0.8
-
 
 def transpose(x):
     return x.transpose(-2, -1)
@@ -689,6 +541,3 @@ def transpose(x):
 
 def normalize(*xs):
     return [None if x is None else F.normalize(x, dim=-1) for x in xs]
-
-
-# def contrastive_loss()

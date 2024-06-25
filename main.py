@@ -160,7 +160,7 @@ def run_cluster_adapter(cfg, cache_keys, cache_values, val_features,
         correct_samples, all_samples = 0, 0
         loss_list = []
         print('Train Epoch: {:} / {:}'.format(train_idx, cfg['train_epoch']))
-        co_scale = 100.0
+
         for i, (images, target) in enumerate(tqdm(train_loader_F)):
             images, target = images.cuda(), target.cuda()
             with torch.no_grad():
@@ -168,7 +168,7 @@ def run_cluster_adapter(cfg, cache_keys, cache_values, val_features,
                 image_features /= image_features.norm(dim=-1, keepdim=True)
 
             image_features = image_features.float()
-            cache_logits, image_centers, cls_center = image_adapter(
+            cache_logits, image_centers, _ = image_adapter(
                 image_features,
                 beta=beta,
                 cache_values=cache_values,
@@ -187,7 +187,6 @@ def run_cluster_adapter(cfg, cache_keys, cache_values, val_features,
             nce_losses_1 = nce_loss_1(
                 image_centers.detach(), image_centers, mask=mask) * cfg['ls1']
 
-            # margin = math.sqrt(2) / 2.0 # Here
             margin = 0.0
             nce_losses_in = nce_loss_incls(image_centers.detach(),
                                            image_centers,
