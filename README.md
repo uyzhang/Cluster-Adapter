@@ -26,7 +26,7 @@ conda install pytorch torchvision cudatoolkit
 ```
 
 ### Dataset
-Follow [DATASET.md](https://github.com/uyzhang/Cluster-Adapter/DATASET.md) to install the datasets referring to Tip-Adapter.
+Follow [DATASET.md](https://github.com/uyzhang/Cluster-Adapter/blob/main/DATASET.md) to install the datasets referring to Tip-Adapter.
 
 ## Get Started
 
